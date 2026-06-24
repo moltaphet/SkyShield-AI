@@ -22,6 +22,14 @@ def H(addr) -> str:
 def _deploy(direct_vm, direct_deploy, direct_owner, apy_bps=APY_BPS):
     direct_vm.sender = direct_owner
     direct_vm.warp("2025-01-01T00:00:00Z")
+    # stake() now runs a consensus-backed AI risk screen (gl.nondet.exec_prompt
+    # via gl.vm.run_nondet_unsafe). Direct mode has no real model, so register a
+    # default low-risk (band 0) response; tests that need a different verdict can
+    # override with their own direct_vm.mock_llm(...).
+    direct_vm.mock_llm(
+        r"DeFi staking risk model",
+        '{"risk_bps": 500, "rationale": "normal deposit at a sane APY"}',
+    )
     return direct_deploy(CONTRACT, initial_apy_bps=apy_bps)
 
 
@@ -187,3 +195,65 @@ def test_pause_blocks_staking_but_allows_withdraw(direct_vm, direct_deploy, dire
 
     # Withdrawals remain available so funds are never trapped.
     assert contract.withdraw_max() == 100 * TOKEN
+
+
+# --------------------------------------------------------------------------- #
+# Consensus-backed AI / live-market paths (non-deterministic)                 #
+# --------------------------------------------------------------------------- #
+def test_stake_rejected_when_ai_flags_extreme_risk(
+    direct_vm, direct_deploy, direct_owner, direct_alice
+):
+    contract = _deploy(direct_vm, direct_deploy, direct_owner)
+    # Override the default low-risk screen with an EXTREME (band 3) verdict.
+    direct_vm.clear_mocks()
+    direct_vm.mock_llm(
+        r"DeFi staking risk model",
+        '{"risk_bps": 9000, "rationale": "implausible APY, exploit-shaped"}',
+    )
+    direct_vm.sender = direct_alice
+    with direct_vm.expect_revert("AI risk screen flagged extreme risk"):
+        contract.stake(100 * TOKEN)
+    # Nothing was persisted: the gate sits above all storage mutation.
+    assert contract.balance_of(H(direct_alice)) == 0
+
+
+def test_ai_validator_agrees_on_same_risk_band(
+    direct_vm, direct_deploy, direct_owner, direct_alice
+):
+    contract = _deploy(direct_vm, direct_deploy, direct_owner)
+    direct_vm.sender = direct_alice
+    contract.stake(100 * TOKEN)
+    # Leader scored band 0 (risk_bps 500). A validator that independently scores
+    # a different-but-same-band value (risk_bps 900) must still agree.
+    assert direct_vm.run_validator(leader_result={"risk_bps": 900}) is True
+    # A validator landing in a different band (band 2) disagrees.
+    assert direct_vm.run_validator(leader_result={"risk_bps": 5000}) is False
+
+
+def test_update_apy_from_market_sets_live_rate(
+    direct_vm, direct_deploy, direct_owner
+):
+    contract = _deploy(direct_vm, direct_deploy, direct_owner)
+    # DeFiLlama chart shape: oldest-to-newest samples; last carries live APY (%).
+    direct_vm.mock_web(
+        r"yields\.llama\.fi/chart",
+        {
+            "status": 200,
+            "body": '{"status":"success","data":['
+            '{"timestamp":"2025-01-01","apy":3.10},'
+            '{"timestamp":"2025-01-02","apy":4.25}]}',
+        },
+    )
+    direct_vm.sender = direct_owner
+    new_apy = contract.update_apy_from_market()
+    assert new_apy == 425                       # 4.25% -> 425 bps
+    assert contract.get_apy() == 425
+
+
+def test_update_apy_from_market_is_owner_only(
+    direct_vm, direct_deploy, direct_owner, direct_alice
+):
+    contract = _deploy(direct_vm, direct_deploy, direct_owner)
+    direct_vm.sender = direct_alice
+    with direct_vm.expect_revert("not the owner"):
+        contract.update_apy_from_market()
