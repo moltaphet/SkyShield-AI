@@ -593,7 +593,7 @@ class SkyShieldAI(gl.Contract):
         url = f"{AVIATION_API_BASE}?flight_iata={flight_code}"
 
         def leader_fn() -> dict:
-            res = gl.nondet.web.get(url)
+            res = gl.nondet.web.request(url, method="GET")
             status_code = getattr(res, "status", 200)
             if status_code >= 500:
                 raise gl.vm.UserError(f"{ERROR_TRANSIENT} aviation API {status_code}")
