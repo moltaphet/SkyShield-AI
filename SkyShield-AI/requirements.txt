@@ -1,9 +1,0 @@
-# SkyShield AI - GenLayer Intelligent Contract tooling.
-# NOTE: requires Python 3.10-3.12 (the test harness depends on hydra, which
-# does not yet support Python 3.13+). Create the venv with:
-#     uv venv --python 3.12 .venv
-#     uv pip install --python .venv/bin/python -r requirements.txt
-
-genvm-linter==0.10.0   # genvm-lint: AST safety + SDK semantic validation + ABI/schema
-genlayer-test==0.29.2  # gltest: direct-mode + integration test harness
-pytest>=8,<10
