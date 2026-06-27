@@ -1,0 +1,36 @@
+# gltest configuration for the SkyShield AI Intelligent Contract.
+#
+# Direct-mode tests (tests/direct/) need none of this; it drives the integration
+# suite (tests/integration/) against a real GenLayer environment.
+#
+# Run:
+#   gltest tests/integration/ -v -s --network studionet
+#   gltest tests/integration/ -v -s --network localnet
+#   gltest tests/integration/ -v -s -m slow            # real LLM/web tests
+
+paths:
+  contracts: contracts
+  artifacts: artifacts
+
+environment: .env
+
+# The active network is selected on the command line, e.g. `--network studionet`
+# (gasless; 0 GEN balance is fine). Without the flag, gltest defaults to localnet.
+
+networks:
+  # Default target when no `--network` flag is passed. studio.genlayer.com is
+  # gasless (0 GEN balance is fine), ideal for consensus + live-read validation.
+  default: studionet
+
+  # GenLayer Studio running locally (genlayer up) or GLSim (glsim --port 4000).
+  localnet: {}
+
+  # Hosted Studio - gasless, no funding required.
+  studionet:
+    url: https://studio.genlayer.com/api
+
+  # Public testnets. To target these, add a funded account under the relevant
+  # network here (e.g. `accounts: ["${ACCOUNT_PRIVATE_KEY_1}"]`) and set that
+  # variable in `.env`. Left empty so the default suite needs no secrets.
+  testnet_asimov: {}
+  testnet_bradbury: {}
