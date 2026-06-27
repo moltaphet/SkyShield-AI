@@ -1,17 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { ThemeProvider } from "@/context/ThemeContext";
-import { VaultDataProvider } from "@/context/VaultDataContext";
 import { WalletProvider } from "@/context/WalletContext";
+import { SkyShieldDataProvider } from "@/context/SkyShieldDataContext";
 
-/** App-wide client providers. Add more (query cache, etc.) here. */
+/** App-wide client providers for the SkyShield AI dashboard. */
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider>
-      <WalletProvider>
-        <VaultDataProvider>{children}</VaultDataProvider>
-      </WalletProvider>
-    </ThemeProvider>
+    <WalletProvider>
+      <SkyShieldDataProvider>{children}</SkyShieldDataProvider>
+    </WalletProvider>
   );
 }

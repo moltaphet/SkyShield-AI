@@ -1,8 +1,8 @@
 {
-  "name": "genvault-frontend",
+  "name": "skyshield-ai-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "GenVault — frontend for the SmartStakingOptimizer Intelligent Contract on GenLayer",
+  "description": "SkyShield AI — frontend for the autonomous parametric flight-insurance Intelligent Contract on GenLayer",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -1,37 +1,34 @@
 import type { Metadata } from "next";
+import { Orbitron, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
+import { Starfield } from "@/components/skyshield/Starfield";
+
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
+  variable: "--font-orbitron",
+  display: "swap",
+});
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  title: "GenVault — Intelligent Staking & Yield Optimizer",
+  title: "SkyShield AI — Autonomous Flight Insurance on GenLayer",
   description:
-    "Stake, auto-compound, and withdraw with the SmartStakingOptimizer Intelligent Contract on GenLayer.",
+    "Parametric flight-delay insurance that prices premiums and settles claims autonomously inside GenLayer consensus — no oracle, no keeper, no claims adjuster.",
 };
-
-/**
- * Applies the saved (or system) theme class before the page paints, preventing
- * a flash of the wrong theme on first load. Defaults to dark.
- */
-const themeInitScript = `
-(function () {
-  try {
-    var stored = localStorage.getItem("genvault-theme");
-    var prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
-    var theme = stored || (prefersLight ? "light" : "dark");
-    document.documentElement.classList.add(theme === "light" ? "light" : "dark");
-  } catch (e) {
-    document.documentElement.classList.add("dark");
-  }
-})();
-`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
+    <html lang="en" className={`${orbitron.variable} ${inter.variable}`} suppressHydrationWarning>
       <body>
+        <div className="sky-backdrop" aria-hidden />
+        <Starfield />
         <Providers>{children}</Providers>
       </body>
     </html>

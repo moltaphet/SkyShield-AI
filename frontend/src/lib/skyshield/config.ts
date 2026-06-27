@@ -13,8 +13,12 @@ function readEnv(value: string | undefined, fallback = ""): string {
   return value.trim().replace(/^["']|["']$/g, "");
 }
 
+/** Deployed SkyShield AI contract; overridable via env for other networks. */
+const DEFAULT_CONTRACT_ADDRESS = "0x43050A476485547450Aa80A4Bf059D17CE17CC28";
+
 export const SKYSHIELD_CONTRACT_ADDRESS = readEnv(
   process.env.NEXT_PUBLIC_SKYSHIELD_CONTRACT_ADDRESS,
+  DEFAULT_CONTRACT_ADDRESS,
 ) as `0x${string}`;
 
 /** True once a real SkyShield contract address has been configured. */

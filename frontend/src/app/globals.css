@@ -1,294 +1,289 @@
 @import "tailwindcss";
 
-/* Enable a class-based dark mode toggle (default variant follows the OS). */
-@custom-variant dark (&:where(.dark, .dark *));
+/* ===========================================================================
+   SkyShield AI — "Dark Aviation / Cyberpunk Sky" theme
+   ========================================================================= */
 
-/*
- * Semantic color tokens. We map Tailwind color utilities to CSS variables with
- * `@theme inline` so the utilities resolve `var(--token)` at runtime — that lets
- * us flip every color by overriding the variables under `.dark`.
- */
-@theme inline {
-  --color-vault-bg: var(--bg);
-  --color-vault-panel: var(--panel);
-  --color-vault-panel-2: var(--panel-2);
-  --color-vault-border: var(--border);
-  --color-vault-border-strong: var(--border-strong);
-  --color-vault-muted: var(--muted);
-  --color-vault-text: var(--text);
-  --color-vault-accent: var(--accent);
-  --color-vault-accent-2: var(--accent-2);
-  --color-vault-accent-soft: var(--accent-soft);
-
-  --animate-fade-in: fade-in 0.5s ease-out both;
-  --animate-float: float 6s ease-in-out infinite;
-}
-
-/* Light mode (clean, high-contrast) is the default. */
 :root {
-  --bg: #eef2f9;
-  --panel: rgba(255, 255, 255, 0.72);
-  --panel-2: rgba(15, 23, 42, 0.04);
-  --border: rgba(15, 23, 42, 0.1);
-  --border-strong: rgba(15, 23, 42, 0.16);
-  --muted: #56657f;
-  --text: #0b1220;
-  --accent: #059669;
-  --accent-2: #0891b2;
-  --accent-soft: rgba(5, 150, 105, 0.12);
+  /* Core palette */
+  --bg-deep: #050a1a;
+  --bg-panel: #0a1228;
+  --bg-elevated: #0d1730;
 
-  --glow-1: rgba(5, 150, 105, 0.16);
-  --glow-2: rgba(8, 145, 178, 0.14);
-  --shadow-card: 0 10px 30px -12px rgba(15, 23, 42, 0.25);
-  color-scheme: light;
+  --sky-blue: #00b4ff; /* electric blue accent  */
+  --sky-blue-dim: #0a7fb8;
+  --sky-silver: #c0c0c0;
+  --sky-amber: #ffb300; /* warning / monitoring   */
+  --sky-lime: #4ade80; /* success / payout       */
+  --sky-cyan: #38e6ff;
+  --sky-red: #ff4d6d;
+
+  --text: #e8f1ff;
+  --text-dim: #9fb3d1;
+  --muted: #5f7396;
+
+  --border: rgba(0, 180, 255, 0.18);
+  --border-strong: rgba(0, 180, 255, 0.45);
+
+  --glass: rgba(12, 22, 46, 0.55);
+  --glass-bright: rgba(16, 30, 60, 0.7);
+
+  --glow-blue: 0 0 18px rgba(0, 180, 255, 0.45);
+  --glow-amber: 0 0 18px rgba(255, 179, 0, 0.45);
+
+  --font-head: var(--font-orbitron), "Segoe UI", sans-serif;
+  --font-body: var(--font-inter), system-ui, sans-serif;
 }
 
-/* Dark mode (deep Web3). */
-.dark {
-  --bg: #060910;
-  --panel: rgba(18, 24, 38, 0.66);
-  --panel-2: rgba(255, 255, 255, 0.035);
-  --border: rgba(148, 163, 184, 0.14);
-  --border-strong: rgba(148, 163, 184, 0.28);
-  --muted: #8b9bb4;
-  --text: #e6edf6;
-  --accent: #34d399;
-  --accent-2: #22d3ee;
-  --accent-soft: rgba(52, 211, 153, 0.14);
+* {
+  box-sizing: border-box;
+}
 
-  --glow-1: rgba(52, 211, 153, 0.18);
-  --glow-2: rgba(34, 211, 238, 0.16);
-  --shadow-card: 0 20px 50px -20px rgba(0, 0, 0, 0.75);
-  color-scheme: dark;
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background-color: var(--bg);
-  color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
   min-height: 100vh;
-  /* Layered ambient glows behind the dashboard for depth. */
-  background-image:
-    radial-gradient(60rem 60rem at 12% -8%, var(--glow-1), transparent 60%),
-    radial-gradient(55rem 55rem at 110% 10%, var(--glow-2), transparent 55%);
-  background-attachment: fixed;
-  transition: background-color 0.4s ease, color 0.4s ease;
-}
-
-/* Glassmorphism surface with layered depth. */
-.glass {
-  background-color: var(--panel);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-card), inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
-}
-
-/* Gradient brand text. */
-.text-gradient {
-  background-image: linear-gradient(120deg, var(--accent), var(--accent-2));
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-
-/* Soft accent glow used on primary actions and badges. */
-.glow-accent {
-  box-shadow: 0 8px 24px -8px var(--glow-1), 0 0 0 1px var(--border);
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
-/* Respect reduced-motion preferences. */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    transition-duration: 0.001ms !important;
-  }
-}
-
-/* ========================================================================= */
-/* SkyShield AI - neon cyberpunk / glassmorphism scope.                      */
-/*                                                                           */
-/* `.sky-scope` re-skins the shared `vault-*` design tokens to a neon        */
-/* cyan/magenta palette, so the existing glass primitives render in a        */
-/* cyberpunk theme without touching the GenVault staking UI. It also lays    */
-/* down an animated 3D grid + ambient glow backdrop for depth.              */
-/* ========================================================================= */
-.sky-scope {
-  --bg: #05060f;
-  --panel: rgba(13, 18, 38, 0.55);
-  --panel-2: rgba(125, 211, 252, 0.05);
-  --border: rgba(80, 230, 255, 0.16);
-  --border-strong: rgba(80, 230, 255, 0.4);
-  --muted: #7c8db5;
-  --text: #e9f4ff;
-  --accent: #22e1ff;
-  --accent-2: #ff3df0;
-  --accent-soft: rgba(34, 225, 255, 0.12);
-
-  --sky-cyan: #22e1ff;
-  --sky-magenta: #ff3df0;
-  --sky-lime: #6ef195;
-  --sky-amber: #ffc24b;
-  --sky-red: #ff4d6d;
-
-  --glow-1: rgba(34, 225, 255, 0.14);
-  --glow-2: rgba(255, 61, 240, 0.12);
-  --shadow-card: 0 24px 60px -28px rgba(0, 0, 0, 0.9);
-
-  position: relative;
+  background-color: var(--bg-deep);
   color: var(--text);
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(60rem 50rem at 8% -10%, var(--glow-1), transparent 60%),
-    radial-gradient(55rem 45rem at 108% 0%, var(--glow-2), transparent 55%);
-  isolation: isolate;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
-/* Perspective grid floor that drifts toward the horizon. */
-.sky-scope::before {
-  content: "";
-  position: absolute;
+/* Layered cosmic background: radial nebulae over the deep navy base. */
+.sky-backdrop {
+  position: fixed;
   inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(34, 225, 255, 0.07) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(34, 225, 255, 0.07) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: linear-gradient(to bottom, transparent, black 18%, black 82%, transparent);
-  animation: sky-grid-drift 9s linear infinite;
+  z-index: -2;
+  background:
+    radial-gradient(1200px 700px at 80% -10%, rgba(0, 180, 255, 0.16), transparent 60%),
+    radial-gradient(900px 600px at 10% 110%, rgba(120, 0, 255, 0.12), transparent 55%),
+    radial-gradient(700px 500px at 50% 50%, rgba(0, 60, 120, 0.18), transparent 70%),
+    var(--bg-deep);
 }
 
-/* Neon glowing text. */
-.sky-neon {
-  text-shadow:
-    0 0 6px rgba(34, 225, 255, 0.55),
-    0 0 18px rgba(34, 225, 255, 0.35);
-}
-.sky-neon-magenta {
-  color: var(--sky-magenta);
-  text-shadow:
-    0 0 6px rgba(255, 61, 240, 0.55),
-    0 0 18px rgba(255, 61, 240, 0.3);
-}
-
-/* Brand wordmark gradient (cyan -> magenta). */
-.sky-title {
-  background-image: linear-gradient(110deg, var(--sky-cyan), var(--sky-magenta));
-  background-clip: text;
-  -webkit-background-clip: text;
-  color: transparent;
-}
-
-/* Neon-edged glass surface with an animated border sheen. */
-.sky-card {
-  position: relative;
-  border: 1px solid var(--border);
-  box-shadow:
-    var(--shadow-card),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.04),
-    0 0 24px -12px rgba(34, 225, 255, 0.4);
-}
-.sky-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(120deg, rgba(34, 225, 255, 0.5), transparent 40%, rgba(255, 61, 240, 0.4));
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-/* CRT scanline overlay for the terminal board. */
-.sky-scanlines {
-  position: relative;
-}
-.sky-scanlines::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0,
-    rgba(0, 0, 0, 0) 2px,
-    rgba(0, 0, 0, 0.16) 3px
-  );
-  border-radius: inherit;
-  z-index: 1;
-}
-
-/* Monospace terminal type. */
-.sky-mono {
-  font-family: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", monospace;
+h1, h2, h3, h4, .font-head {
+  font-family: var(--font-head);
   letter-spacing: 0.02em;
 }
 
-/* Live status dot. */
-.sky-dot {
-  display: inline-block;
-  height: 0.55rem;
-  width: 0.55rem;
-  border-radius: 9999px;
-  box-shadow: 0 0 8px currentColor, 0 0 2px currentColor;
+a { color: inherit; text-decoration: none; }
+
+/* --------------------------------------------------------------------------
+   Animated starfield + drifting clouds
+   -------------------------------------------------------------------------- */
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-.sky-blink {
-  animation: sky-blink 1.1s steps(1, end) infinite;
-}
-.sky-flicker {
-  animation: sky-flicker 2.6s linear infinite;
-}
-.sky-scan-sweep {
-  animation: sky-scan-sweep 1.6s ease-in-out infinite;
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff;
+  opacity: 0.7;
+  animation: twinkle var(--dur, 4s) ease-in-out infinite;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
 }
 
-@keyframes sky-grid-drift {
-  to {
-    background-position: 0 44px, 44px 0;
-  }
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.8); }
+  50% { opacity: 0.9; transform: scale(1.2); }
 }
-@keyframes sky-blink {
-  50% {
-    opacity: 0.15;
-  }
+
+.cloud {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  background: radial-gradient(circle, rgba(0, 180, 255, 0.10), transparent 70%);
+  animation: drift linear infinite;
 }
-@keyframes sky-flicker {
-  0%, 100% { opacity: 1; }
-  92% { opacity: 1; }
-  93% { opacity: 0.4; }
-  94% { opacity: 1; }
-  97% { opacity: 0.7; }
-  98% { opacity: 1; }
+
+@keyframes drift {
+  from { transform: translateX(-25vw); }
+  to { transform: translateX(125vw); }
 }
-@keyframes sky-scan-sweep {
-  0% { transform: translateX(-110%); }
-  100% { transform: translateX(110%); }
+
+/* --------------------------------------------------------------------------
+   Glassmorphism cards with glowing blue borders
+   -------------------------------------------------------------------------- */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 8px 40px rgba(0, 0, 0, 0.5);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.glass:hover {
+  border-color: var(--border-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 8px 40px rgba(0, 0, 0, 0.55),
+    0 0 30px rgba(0, 180, 255, 0.18);
+}
+
+.glass-amber {
+  border-color: rgba(255, 179, 0, 0.35);
+}
+.glass-amber:hover {
+  border-color: rgba(255, 179, 0, 0.6);
+  box-shadow: 0 0 30px rgba(255, 179, 0, 0.18);
+}
+
+/* --------------------------------------------------------------------------
+   Neon buttons
+   -------------------------------------------------------------------------- */
+.btn {
+  font-family: var(--font-head);
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.7rem 1.4rem;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, rgba(0, 180, 255, 0.18), rgba(0, 180, 255, 0.05));
+  color: var(--sky-cyan);
+  transition: all 0.2s ease;
+}
+.btn:hover:not(:disabled) {
+  color: #fff;
+  border-color: var(--sky-blue);
+  box-shadow: var(--glow-blue);
+  transform: translateY(-1px);
+}
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-primary {
+  background: linear-gradient(180deg, #00b4ff, #0a7fb8);
+  color: #00121f;
+  border-color: var(--sky-blue);
+  font-weight: 700;
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 0 26px rgba(0, 180, 255, 0.7);
+  color: #001018;
+}
+
+.btn-amber {
+  background: linear-gradient(180deg, #ffb300, #b87f00);
+  color: #1a1200;
+  border-color: var(--sky-amber);
+  font-weight: 700;
+}
+.btn-amber:hover:not(:disabled) {
+  box-shadow: 0 0 26px rgba(255, 179, 0, 0.65);
+}
+
+/* --------------------------------------------------------------------------
+   Inputs
+   -------------------------------------------------------------------------- */
+.field {
+  width: 100%;
+  background: rgba(3, 8, 20, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.7rem 0.9rem;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.field:focus {
+  outline: none;
+  border-color: var(--sky-blue);
+  box-shadow: var(--glow-blue);
+}
+.field::placeholder { color: var(--muted); }
+
+.label {
+  font-family: var(--font-head);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 0.4rem;
+  display: block;
+}
+
+/* --------------------------------------------------------------------------
+   Status badges
+   -------------------------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-head);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+.badge::before {
+  content: "";
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+.blink { animation: blink 1s step-start infinite; }
+@keyframes blink { 50% { opacity: 0.25; } }
+
+/* --------------------------------------------------------------------------
+   Radar sweep (aviation accent)
+   -------------------------------------------------------------------------- */
+.radar {
+  position: relative;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background:
+    repeating-radial-gradient(circle, transparent 0 14px, rgba(0, 180, 255, 0.08) 14px 15px);
+  overflow: hidden;
+}
+.radar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: conic-gradient(from 0deg, rgba(0, 180, 255, 0.5), transparent 25%);
+  animation: sweep 3.5s linear infinite;
+}
+@keyframes sweep { to { transform: rotate(360deg); } }
+
+/* Glowing animated text */
+.neon-text {
+  text-shadow: 0 0 12px rgba(0, 180, 255, 0.6), 0 0 32px rgba(0, 180, 255, 0.3);
+}
+.amber-text { color: var(--sky-amber); }
+.lime-text { color: var(--sky-lime); }
+.cyan-text { color: var(--sky-cyan); }
+.dim { color: var(--text-dim); }
+.muted { color: var(--muted); }
+
+/* Section rhythm */
+.section { scroll-margin-top: 90px; }
+
+/* Animated horizontal scan line under headings */
+.scanline {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--sky-blue), transparent);
+  background-size: 200% 100%;
+  animation: scan 3s linear infinite;
+}
+@keyframes scan { to { background-position: 200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .star, .cloud, .radar::after, .scanline, .blink { animation: none; }
 }
