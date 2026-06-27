@@ -37,7 +37,7 @@ exact integer math in *atto* scale (`value × 10¹⁸`), so there is no floating
 between validators.
 
 - **Contract:** `SkyShieldAI` ([`contracts/sky_shield_ai.py`](contracts/sky_shield_ai.py))
-- **Address:** `0x43050A476485547450Aa80A4Bf059D17CE17CC28`
+- **Address:** `0x91dCD64Fa828b5003688de07C6DCf052cF75E931`
 - **Network:** GenLayer `studionet`
 
 ---
@@ -162,7 +162,7 @@ npm install
 
 # Configure the deployed contract + network
 cp .env.local.example .env.local
-#   NEXT_PUBLIC_CONTRACT_ADDRESS=0x43050A476485547450Aa80A4Bf059D17CE17CC28
+#   NEXT_PUBLIC_CONTRACT_ADDRESS=0x91dCD64Fa828b5003688de07C6DCf052cF75E931
 #   NEXT_PUBLIC_GENLAYER_CHAIN=studionet
 
 npm run dev

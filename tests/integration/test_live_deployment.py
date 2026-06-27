@@ -19,7 +19,7 @@ import pytest
 from gltest import get_contract_factory
 
 # Officially deployed SkyShield AI Intelligent Contract.
-DEPLOYED_ADDRESS = "0x43050A476485547450Aa80A4Bf059D17CE17CC28"
+DEPLOYED_ADDRESS = "0x91dCD64Fa828b5003688de07C6DCf052cF75E931"
 
 ATTO = 10**18
 BASE_COVERAGE_ATTO = 1_000 * ATTO
