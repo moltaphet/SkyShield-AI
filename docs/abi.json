@@ -1,101 +1,164 @@
 {
   "ctor": {
-    "params": [
-      [
-        "initial_apy_bps",
-        "int"
-      ]
-    ],
+    "params": [],
     "kwparams": {}
   },
   "methods": {
-    "balance_of": {
+    "admin_open_policy": {
       "params": [
         [
-          "staker",
+          "passenger",
           "string"
-        ]
-      ],
-      "kwparams": {},
-      "readonly": true,
-      "ret": "int"
-    },
-    "compound_for": {
-      "params": [
+        ],
         [
-          "staker",
+          "flight_code",
           "string"
-        ]
-      ],
-      "kwparams": {},
-      "readonly": false,
-      "ret": "int",
-      "payable": false
-    },
-    "compound_rewards": {
-      "params": [],
-      "kwparams": {},
-      "readonly": false,
-      "ret": "int",
-      "payable": false
-    },
-    "get_account": {
-      "params": [
+        ],
         [
-          "staker",
-          "string"
-        ]
-      ],
-      "kwparams": {},
-      "readonly": true,
-      "ret": "dict"
-    },
-    "get_apy": {
-      "params": [],
-      "kwparams": {},
-      "readonly": true,
-      "ret": "int"
-    },
-    "get_owner": {
-      "params": [],
-      "kwparams": {},
-      "readonly": true,
-      "ret": "string"
-    },
-    "get_stats": {
-      "params": [],
-      "kwparams": {},
-      "readonly": true,
-      "ret": "dict"
-    },
-    "is_paused": {
-      "params": [],
-      "kwparams": {},
-      "readonly": true,
-      "ret": "bool"
-    },
-    "preview_pending": {
-      "params": [
+          "departure_timestamp",
+          "int"
+        ],
         [
-          "staker",
-          "string"
-        ]
-      ],
-      "kwparams": {},
-      "readonly": true,
-      "ret": "int"
-    },
-    "set_apy": {
-      "params": [
-        [
-          "new_apy_bps",
+          "risk_bps",
           "int"
         ]
       ],
       "kwparams": {},
       "readonly": false,
-      "ret": "null",
+      "ret": "int",
       "payable": false
+    },
+    "admin_resolve_policy": {
+      "params": [
+        [
+          "policy_id",
+          "int"
+        ],
+        [
+          "delay_minutes",
+          "int"
+        ],
+        [
+          "cancelled",
+          "bool"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "check_flight_and_execute": {
+      "params": [
+        [
+          "policy_id",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "dict",
+      "payable": false
+    },
+    "claim": {
+      "params": [],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "int",
+      "payable": false
+    },
+    "claimable_of": {
+      "params": [
+        [
+          "account",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "int"
+    },
+    "get_policy": {
+      "params": [
+        [
+          "policy_id",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "get_pool_stats": {
+      "params": [],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "lp_position": {
+      "params": [
+        [
+          "account",
+          "string"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "dict"
+    },
+    "preview_premium": {
+      "params": [
+        [
+          "risk_bps",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "int"
+    },
+    "provide_liquidity": {
+      "params": [
+        [
+          "amount",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "int",
+      "payable": false
+    },
+    "purchase_policy": {
+      "params": [
+        [
+          "flight_code",
+          "string"
+        ],
+        [
+          "departure_timestamp",
+          "int"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": false,
+      "ret": "int",
+      "payable": false
+    },
+    "quote_payout": {
+      "params": [
+        [
+          "delay_minutes",
+          "int"
+        ],
+        [
+          "cancelled",
+          "bool"
+        ]
+      ],
+      "kwparams": {},
+      "readonly": true,
+      "ret": "int"
     },
     "set_paused": {
       "params": [
@@ -109,25 +172,8 @@
       "ret": "null",
       "payable": false
     },
-    "stake": {
-      "params": [
-        [
-          "amount",
-          "int"
-        ]
-      ],
-      "kwparams": {},
-      "readonly": false,
-      "ret": "null",
-      "payable": false
-    },
-    "total_balance_of": {
-      "params": [
-        [
-          "staker",
-          "string"
-        ]
-      ],
+    "share_price_atto": {
+      "params": [],
       "kwparams": {},
       "readonly": true,
       "ret": "int"
@@ -144,20 +190,13 @@
       "ret": "null",
       "payable": false
     },
-    "withdraw": {
+    "withdraw_liquidity": {
       "params": [
         [
-          "amount",
+          "shares",
           "int"
         ]
       ],
-      "kwparams": {},
-      "readonly": false,
-      "ret": "int",
-      "payable": false
-    },
-    "withdraw_max": {
-      "params": [],
       "kwparams": {},
       "readonly": false,
       "ret": "int",

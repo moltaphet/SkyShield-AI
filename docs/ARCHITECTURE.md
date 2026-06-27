@@ -1,27 +1,25 @@
-# GenVault — Contract Architecture
+# SkyShield AI — Contract Architecture
 
-This document describes the `SmartStakingOptimizer` Intelligent Contract and the
-ABI the frontend binds to. Pair it with the machine-readable
-[`abi.json`](abi.json).
+This document describes the `SkyShieldAI` Intelligent Contract and the ABI the
+frontend binds to. Pair it with the machine-readable [`abi.json`](abi.json).
 
 ## 1. Overview
 
-`SmartStakingOptimizer` is a single-file GenLayer Intelligent Contract
-(`contracts/smart_staking_optimizer.py`). It is **fully deterministic**: it makes
-no LLM or web calls, so it does not need a custom equivalence principle — every
-validator re-executes the same integer math against the same consensus block
-time and reaches identical state.
+`SkyShieldAI` is a single-file GenLayer Intelligent Contract
+(`contracts/sky_shield_ai.py`) that underwrites parametric flight-delay insurance.
+Unlike a deterministic-only contract, it performs **non-deterministic work inside
+consensus** and reconciles it with custom equivalence functions.
 
 ### Why it is "intelligent"
 
-The contract embodies the GenLayer execution model rather than LLM inference:
-
-- It reads the **consensus block clock** (`datetime.datetime.now()`, which the
-  GenVM replaces with the leader-proposed, validator-agreed block time) to
-  compute time-weighted yield deterministically — something an EVM contract can
-  only approximate with miner-influenced `block.timestamp`.
-- Compounding can be **triggered permissionlessly** (`compound_for`), enabling
-  off-chain keeper/automation agents to optimize positions without custody.
+- It reads **live flight status** from an aviation API via `gl.nondet.web` — every
+  validator independently re-fetches, so there is no trusted oracle or keeper.
+- It uses `gl.nondet.exec_prompt` (an **LLM**) to price premiums from delay/weather
+  risk and to parse noisy flight-status text into a structured payout decision.
+- Consensus is reached on the **derived decision** (risk band / payout tier), not
+  the raw bytes, via custom **equivalence-principle** validator functions.
+- Time comes only from the **consensus block clock** (`datetime.datetime.now()`,
+  which the GenVM replaces with the leader-proposed, validator-agreed block time).
 
 ## 2. State model
 
@@ -29,137 +27,134 @@ The contract embodies the GenLayer execution model rather than LLM inference:
 
 | Field | Type | Meaning |
 |-------|------|---------|
-| `owner` | `Address` | Admin (set APY, pause, transfer ownership) |
-| `apy_bps` | `u256` | Annual yield rate in basis points (100 = 1%) |
-| `total_staked` | `u256` | Sum of every account's principal (atto) |
-| `staker_count` | `u256` | Number of accounts that have ever staked |
-| `paused` | `bool` | Emergency switch for deposits/compounding |
-| `accounts` | `TreeMap[Address, StakeAccount]` | Per-account positions |
+| `owner` | `Address` | Admin (pause, fallback resolution, transfer ownership) |
+| `paused` | `bool` | Blocks new policies + LP deposits (never exits) |
+| `reentrancy_locked` | `bool` | Re-entrancy guard for value-out paths |
+| `total_assets` | `u256` | GEN backing the pool (LP deposits + premiums − payouts), atto |
+| `total_shares` | `u256` | Total LP shares minted |
+| `locked_coverage` | `u256` | Sum of `max_payout` reserved by ACTIVE policies, atto |
+| `lp_shares` | `TreeMap[Address, u256]` | Per-LP share balance |
+| `claimable` | `TreeMap[Address, u256]` | Pull-payment ledger (passengers + exiting LPs) |
+| `next_policy_id` | `u256` | Monotonic policy id counter |
+| `policies` | `TreeMap[u256, Policy]` | All policies by id |
+| `active_key_to_policy` | `TreeMap[str, u256]` | Dedup index: passenger+flight+departure → policy id |
+| `policy_count` / `lp_count` | `u256` | Lifetime counters |
+| `total_premiums_collected` / `total_payouts` / `total_yield_to_lps` | `u256` | Lifetime totals (atto) |
 
-### Per-account record (`StakeAccount`)
+### Per-policy record (`Policy`)
 
 | Field | Type | Meaning |
 |-------|------|---------|
-| `principal` | `u256` | Current staked principal incl. compounded yield (atto) |
-| `last_accrual_ts` | `u256` | Unix seconds of last settle/compound |
-| `total_compounded` | `u256` | Lifetime yield folded into principal |
-| `total_deposited` | `u256` | Lifetime principal deposited via `stake()` |
-| `total_withdrawn` | `u256` | Lifetime amount withdrawn |
-| `exists` | `bool` | True once the account has ever staked |
+| `policy_id` | `u256` | Unique id |
+| `passenger` | `Address` | Policy holder |
+| `flight_code` | `str` | e.g. `BA245` |
+| `departure_timestamp` | `u256` | Scheduled departure, unix seconds |
+| `premium_paid` | `u256` | Premium escrowed into the pool (atto) |
+| `max_payout` | `u256` | Coverage reserved while ACTIVE (atto) |
+| `payout_amount` | `u256` | Actual payout on resolution (atto) |
+| `status` | `str` | `ACTIVE` / `RESOLVED` / `EXPIRED` |
+| `risk_bps` | `u256` | AI risk score the premium was priced from |
+| `delay_minutes` | `u256` | Observed delay at resolution |
+| `created_at` / `resolved_at` | `u256` | Consensus timestamps |
 
-> **Upgrade note:** `StakeAccount` fields are append-only. Never reorder or
-> insert — storage layout is positional. Add new fields at the end only.
+## 3. Economic model
 
-## 3. Yield math
-
-Linear accrual between settlements, exact integer arithmetic:
+All money is **atto-scale** (`value × 10**18`); shares and risk are basis points.
 
 ```
-pending = principal * apy_bps * elapsed_seconds
-          ----------------------------------------
-             BPS_DENOMINATOR * SECONDS_PER_YEAR
-
-BPS_DENOMINATOR = 10_000
-SECONDS_PER_YEAR = 31_536_000   (365 days)
+ATTO              = 10**18
+BPS_DENOMINATOR   = 10_000           # 100.00%
+BASE_COVERAGE     = 1_000 * ATTO     # max payout underwritten per policy
+LOADING_BPS       = 3_000            # +30% protocol margin over fair odds
+MIN_PREMIUM       = 1 * ATTO         # premium floor
+MAX_RISK_BPS      = 10_000           # risk probability clamped to [0, 100%]
 ```
 
-`_settle()` folds `pending` into `principal`, adds it to `total_compounded` and
-`total_staked`, and advances `last_accrual_ts` to now. Because subsequent yield
-is then computed on the larger principal, periodic compounding is geometric:
+### Premium pricing
 
-- Stake 100 tokens @ 10% APY → after 1 year, principal = 110.
-- Compound, wait another year → yield is 11 (10% of 110), principal = 121.
+```
+expected_loss = coverage * risk_bps / BPS_DENOMINATOR
+premium       = expected_loss * (BPS_DENOMINATOR + LOADING_BPS) / BPS_DENOMINATOR
+premium       = max(premium, MIN_PREMIUM)
+```
 
-**Invariant:** every state-changing entry point settles pending yield *before*
-mutating the balance, so a withdrawal is always taken against the freshest value
-and accounting stays consistent.
+The `risk_bps` is produced **on-chain by the AI** at purchase; `preview_premium`
+exposes the deterministic pricing for any given score.
+
+### Payout tiers
+
+| Delay | Payout (bps of coverage) |
+|-------|--------------------------|
+| 60–120 min | 2_000 (20%) |
+| 120–240 min | 5_000 (50%) |
+| > 240 min **or cancelled** | 10_000 (100%) |
+| < 60 min (on time) | 0 → policy `EXPIRED`, premium becomes LP yield |
+
+### Money flow & invariant
+
+On purchase, `premium` is added to `total_assets` and `max_payout` is added to
+`locked_coverage`. On resolution, the granular payout is credited to the
+passenger's `claimable` ledger and the reservation is released. The protocol
+**always preserves `total_assets >= locked_coverage`**, so it can never sell
+coverage it cannot pay, and LPs can only ever withdraw un-reserved liquidity.
 
 ## 4. Public ABI
 
-Money arguments/returns are **atto-scale** (`value * 10**18`). Addresses are
-0x-prefixed hex strings. `apy_bps` is basis points.
+Money arguments/returns are **atto-scale**. Addresses are 0x-prefixed hex strings.
 
 ### Constructor
 
-| Param | Type | Notes |
-|-------|------|-------|
-| `initial_apy_bps` | `int` | 0 … 1_000_000 (≤ 10,000% APY). Deployer becomes `owner`. |
+No parameters. The deployer becomes `owner` and the pool starts empty.
 
 ### Write methods
 
 | Method | Params | Returns | Description |
 |--------|--------|---------|-------------|
-| `stake` | `amount: int` | — | Stake `amount`; compounds any pending yield first. Reverts if paused or `amount <= 0`. |
-| `compound_rewards` | — | `int` | Compound the caller's pending yield into principal; returns amount compounded. |
-| `compound_for` | `staker: str` | `int` | Permissionless/keeper compounding for `staker`; returns amount compounded. |
-| `withdraw` | `amount: int` | `int` | Settle, then withdraw `amount` of principal+rewards; returns amount withdrawn. Reverts if `amount` exceeds balance. |
-| `withdraw_max` | — | `int` | Settle, then withdraw the caller's entire balance; returns total. |
-| `set_apy` | `new_apy_bps: int` | — | Owner only. |
-| `set_paused` | `value: bool` | — | Owner only. Withdrawals stay enabled while paused. |
+| `provide_liquidity` | `amount: int` | `int` | Deposit GEN into the vault; mints pro-rata LP shares. |
+| `withdraw_liquidity` | `shares: int` | `int` | Burn shares; credits redeemed GEN to `claimable`. Cannot touch reserved coverage. |
+| `purchase_policy` | `flight_code: str, departure_timestamp: int` | `int` | AI prices premium, escrows it, reserves coverage; returns policy id. |
+| `check_flight_and_execute` | `policy_id: int` | `dict` | Permissionless: re-fetch live status and resolve to a payout tier. |
+| `claim` | — | `int` | Withdraw the caller's `claimable` balance. |
+| `admin_open_policy` | `passenger: str, flight_code: str, departure_timestamp: int, risk_bps: int` | `int` | Owner fallback: open with an explicit risk score (no LLM). |
+| `admin_resolve_policy` | `policy_id: int, delay_minutes: int, cancelled: bool` | `dict` | Owner fallback: resolve deterministically (no web/LLM). |
+| `set_paused` | `value: bool` | — | Owner only. Exits stay enabled while paused. |
 | `transfer_ownership` | `new_owner: str` | — | Owner only. |
 
 ### View methods (gas-free reads)
 
 | Method | Params | Returns | Description |
 |--------|--------|---------|-------------|
-| `get_apy` | — | `int` | Current APY in bps. |
-| `is_paused` | — | `bool` | Pause state. |
-| `get_owner` | — | `str` | Owner address. |
-| `balance_of` | `staker: str` | `int` | Settled principal (excludes unsettled pending). |
-| `total_balance_of` | `staker: str` | `int` | Principal + live pending yield (withdrawable now). |
-| `preview_pending` | `staker: str` | `int` | Yield `staker` would compound right now. |
-| `get_account` | `staker: str` | `dict` | Full position snapshot (see below). |
-| `get_stats` | — | `dict` | Protocol totals. |
+| `preview_premium` | `risk_bps: int` | `int` | Premium for a given risk score. |
+| `quote_payout` | `delay_minutes: int, cancelled: bool` | `int` | Payout for a delay/cancellation outcome. |
+| `get_policy` | `policy_id: int` | `dict` | Full policy record. |
+| `claimable_of` | `account: str` | `int` | Withdrawable balance. |
+| `lp_position` | `account: str` | `dict` | LP shares + redeemable/available GEN value. |
+| `share_price_atto` | — | `int` | Current LP share price (atto). |
+| `get_pool_stats` | — | `dict` | `total_assets`, `total_shares`, `locked_coverage`, `available_liquidity`, counts, lifetime totals, `paused`, `owner`. |
 
-`get_account(staker)` returns:
+## 5. Errors & non-determinism classification
 
-```json
-{
-  "exists": true,
-  "principal": 110000000000000000000,
-  "pending_yield": 0,
-  "total_balance": 110000000000000000000,
-  "last_accrual_ts": 1767225600,
-  "total_compounded": 10000000000000000000,
-  "total_deposited": 100000000000000000000,
-  "total_withdrawn": 0
-}
-```
+Deterministic business errors are prefixed `[EXPECTED]` and must match exactly
+across validators (e.g. `[EXPECTED] deposit amount must be positive`,
+`[EXPECTED] insufficient pool liquidity`, `[EXPECTED] caller is not the owner`).
 
-`get_stats()` returns `{ total_staked, staker_count, apy_bps, paused, owner }`.
+Non-deterministic failures from the web/LLM path are classified so validators can
+agree on the *kind* of failure rather than exact text:
 
-## 5. Errors
+- `[EXTERNAL]` — upstream/API error
+- `[TRANSIENT]` — network / 5xx (agree if both transient)
+- `[LLM_ERROR]` — model output unusable
 
-All business errors are deterministic and prefixed `[EXPECTED]` (GenLayer error
-classification). Validators must match them exactly. Examples:
+## 6. Frontend integration
 
-- `[EXPECTED] stake amount must be positive`
-- `[EXPECTED] insufficient staked balance`
-- `[EXPECTED] no stake found for caller`
-- `[EXPECTED] caller is not the owner`
-- `[EXPECTED] contract is paused`
+The UI uses `genlayer-js`:
 
-## 6. Frontend integration (next milestone)
-
-The UI will use `genlayer-js`:
-
-1. **Read** balances/yield with the view methods (no transaction, instant):
-   `total_balance_of`, `preview_pending`, `get_account`, `get_stats`.
-2. **Write** via `stake`, `compound_rewards`, `withdraw`, `withdraw_max` —
-   submit a transaction and wait for acceptance/finality.
+1. **Read** pool/policy state with the view methods (no transaction, instant):
+   `get_pool_stats`, `get_policy`, `lp_position`, `claimable_of`, `preview_premium`,
+   `quote_payout`, `share_price_atto`.
+2. **Write** via `provide_liquidity`, `purchase_policy`, `check_flight_and_execute`,
+   `claim`, `withdraw_liquidity` — submit a transaction and wait for acceptance.
 3. **Display scaling:** divide atto values by `10**18` for human units; render
-   `apy_bps / 100` as a percentage.
-4. **Automation:** an optional keeper loop can call `compound_for(address)` for
-   opted-in users to keep positions optimally compounded.
-
-## 7. Tokenization note
-
-This version manages staked balances as an internal `u256` ledger keyed by
-account (amounts passed explicitly). Wiring it to value transfer is a deliberate,
-isolated next step — either:
-
-- a **payable** native-token model (`@gl.public.write.payable` + `gl.message.value`
-  on `stake`, and a native transfer-out on withdrawal), or
-- an **ERC-20-style token contract** integrated via GenLayer cross-contract calls.
-
-The accounting, yield, and compounding logic above are unaffected by that choice.
+   basis points as `bps / 100` percent.
+4. The client mirrors the deterministic pricing math for an instant premium preview;
+   the authoritative `risk_bps` is always produced on-chain at purchase.

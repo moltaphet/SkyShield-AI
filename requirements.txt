@@ -1,4 +1,4 @@
-# GenVault contract tooling.
+# SkyShield AI contract tooling.
 # NOTE: requires Python 3.10-3.12 (the test harness depends on hydra, which
 # does not yet support Python 3.13+).
 
